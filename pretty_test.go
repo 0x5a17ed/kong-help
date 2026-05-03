@@ -2,6 +2,7 @@ package konghelp
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -11,6 +12,11 @@ import (
 type helpExit struct{}
 
 func renderHelp(t *testing.T, cli any, args ...string) (output string) {
+	t.Helper()
+	return Visible(renderHelpRaw(t, cli, args...))
+}
+
+func renderHelpRaw(t *testing.T, cli any, args ...string) (output string) {
 	t.Helper()
 
 	var stdout bytes.Buffer
@@ -31,7 +37,7 @@ func renderHelp(t *testing.T, cli any, args ...string) (output string) {
 	defer func() {
 		if value := recover(); value != nil {
 			if _, ok := value.(helpExit); ok {
-				output = Visible(stdout.String())
+				output = stdout.String()
 				return
 			}
 			panic(value)
@@ -41,7 +47,7 @@ func renderHelp(t *testing.T, cli any, args ...string) (output string) {
 	if _, err := app.Parse(args); err != nil {
 		t.Fatal(err)
 	}
-	return Visible(stdout.String())
+	return stdout.String()
 }
 
 func TestHelpSeparatesSummaryAndOptionsWithoutArguments(t *testing.T) {
@@ -120,6 +126,27 @@ func TestOptionsKeepsExplicitFlagGroupHeaders(t *testing.T) {
 	assertContains(t, output, "    -a, --alpha  Flag A.")
 	assertContains(t, output, "    -b, --beta   Flag B.")
 	assertNotContainsLine(t, output, "Flags")
+}
+
+func TestFlagsAreColoredButSeparatorCommaIsNot(t *testing.T) {
+	colorFlag := ColorFlag
+	ColorFlag = func(a ...any) string {
+		return "\x1b[36m" + fmt.Sprint(a...) + "\x1b[0m"
+	}
+	t.Cleanup(func() {
+		ColorFlag = colorFlag
+	})
+
+	var cli struct {
+		Verbose bool `short:"v" help:"Verbose output."`
+	}
+
+	output := renderHelpRaw(t, &cli, "--help")
+
+	assertContains(t, output, "\x1b[36m-h\x1b[0m, \x1b[36m--help\x1b[0m")
+	if strings.Contains(output, "\x1b[36m-h,") {
+		t.Fatalf("expected comma between short and long flag to remain uncolored:\n%q", output)
+	}
 }
 
 func assertSingleBlankLineBefore(t *testing.T, output, header string) {

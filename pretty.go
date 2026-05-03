@@ -14,6 +14,7 @@ var ColorRequired = color.New(color.FgRed).SprintFunc()
 var ColorDefault = color.New(color.FgMagenta).SprintFunc()
 var ColorPlaceHolder = ColorDefault
 var ColorCommand = color.New(color.FgCyan).SprintFunc()
+var ColorFlag = color.New(color.FgCyan).SprintFunc()
 var ColorCardHeader = color.New(color.FgGreen).SprintFunc()
 var ColorLow = color.HiBlackString
 var ColorType = ColorExample

@@ -118,18 +118,19 @@ func formatFlag(flag *kong.Flag, format kong.HelpValueFormatter) []string {
 	}
 	var flagStr = "  "
 	if flag.Short != 0 {
-		flagStr = fmt.Sprintf("-%c", flag.Short)
+		flagStr = ColorFlag(fmt.Sprintf("-%c", flag.Short))
 	}
 
 	if value.Name != "" {
+		long := ColorFlag("--" + value.Name)
 		if flagStr == "  " {
-			flagStr += "  --" + value.Name
+			flagStr += "  " + long
 		} else {
-			flagStr += ", --" + value.Name
+			flagStr += ", " + long
 		}
 		if len(flag.Aliases) > 0 {
 			for _, alias := range flag.Aliases {
-				flagStr += ",--" + alias
+				flagStr += "," + ColorFlag("--"+alias)
 			}
 		}
 		if placeholder := flag.PlaceHolder; placeholder != "" {
