@@ -2,9 +2,10 @@ package konghelp
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
-	"strings"
 )
 
 // TODO: Make these configurable

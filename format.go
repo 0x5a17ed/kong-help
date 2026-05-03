@@ -2,10 +2,11 @@ package konghelp
 
 import (
 	"fmt"
-	"github.com/alecthomas/kong"
 	"log/slog"
 	"reflect"
 	"strings"
+
+	"github.com/alecthomas/kong"
 )
 
 func PrettyValueFormatter(formatter kong.HelpValueFormatter) kong.HelpValueFormatter {

@@ -3,10 +3,11 @@ package konghelp
 import (
 	"errors"
 	"fmt"
-	"github.com/alecthomas/kong"
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/alecthomas/kong"
 )
 
 // Ensure we implement the correct interfaces
