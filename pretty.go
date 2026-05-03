@@ -14,6 +14,7 @@ var ColorRequired = color.New(color.FgRed).SprintFunc()
 var ColorDefault = color.New(color.FgMagenta).SprintFunc()
 var ColorPlaceHolder = ColorDefault
 var ColorCommand = color.New(color.FgCyan).SprintFunc()
+var ColorCardHeader = color.New(color.FgGreen).SprintFunc()
 var ColorLow = color.HiBlackString
 var ColorType = ColorExample
 var ColorGroup = color.New(color.FgBlue).Add(color.Underline).SprintFunc()
@@ -28,21 +29,13 @@ func NewPrettyPrinter(printOpts Options) kong.HelpPrinter {
 		w := newHelpWriter(ctx, options, printOpts.width)
 
 		app := ctx.Model
-		if selected := ctx.Selected(); selected == nil {
-			if !w.Options.NoAppSummary {
-				w.Print("")
-				w.Indent().Printf("%s: %s%s", ColorExample("Usage"), app.Name, app.Summary())
-			}
-			printNode(w, app.Node, true)
-			w.Indent().Printf(`Use "%s --help" for more info`, app.Name)
-		} else {
-			if !w.Options.NoAppSummary {
-				w.Print("")
-				w.Indent().Printf("%s: %s", ColorExample("Usage"), selected.Summary())
-			}
-			printNode(w, selected, true)
-			w.Indent().Printf(`Use "%s %s --help" for more info`, app.Name, selected.Name)
+
+		selected := ctx.Selected()
+		if selected == nil {
+			selected = app.Node
 		}
+
+		printNode(w, app, selected, true)
 
 		if _, err := w.WriteTo(ctx.Stdout); err != nil {
 			return err
@@ -51,20 +44,22 @@ func NewPrettyPrinter(printOpts Options) kong.HelpPrinter {
 	}
 }
 
-func printNode(w *helpWriter, node *kong.Node, hide bool) {
+func printNode(w *helpWriter, app *kong.Application, node *kong.Node, hide bool) {
 	if node.Help != "" {
-		w.Print("")
-		w.Indent().PrintWrap(node.Help)
+		w.PrintWrap(node.Help)
+	}
+
+	if !w.Options.NoAppSummary {
+		printUsage(w, app, node)
 	}
 	if w.Options.Summary {
 		return
 	}
 	if node.Detail != "" {
-		w.Print("")
+		w.PrintBlankLine()
 		w.Indent().PrintWrap(node.Detail)
 	}
 	if len(node.Positional) > 0 {
-		w.Print("")
 		printPositionals(w, node.Positional)
 	}
 	if !w.Options.FlagsLast {
@@ -80,6 +75,12 @@ func printNode(w *helpWriter, node *kong.Node, hide bool) {
 	if w.Options.FlagsLast {
 		printFlags(w, node.AllFlags(true))
 	}
+}
+
+func printUsage(w *helpWriter, app *kong.Application, node *kong.Node) {
+	printCard(w, "Usage", [][]string{
+		{"  ", fmt.Sprintf("%s %s", app.Name, strings.TrimSpace(node.Summary()))},
+	})
 }
 
 func printPositionals(w *helpWriter, args []*kong.Positional) {
@@ -120,40 +121,20 @@ func printCommands(w *helpWriter, cmds []*kong.Command) {
 		lines = append(lines, formatCommand(cmd, w.Options.Compact)...)
 	}
 	printCard(w, "Commands", lines)
-
-	// groupedCmds := collectCommandGroups(cmds)
-	// for _, group := range groupedCmds {
-	// 	w.Print("")
-	// 	if group.Metadata.Title != "" {
-	// 		w.Wrap(group.Metadata.Title)
-	// 	}
-	// 	if group.Metadata.Description != "" {
-	// 		w.Indent().Wrap(group.Metadata.Description)
-	// 		w.Print("")
-	// 	}
-	//
-	// 	if w.Compact {
-	// 		writeCompactCommandList(group.Commands, iw)
-	// 	} else {
-	// 		writeCommandList(group.Commands, iw)
-	// 	}
-	// }
 }
 
 func printCard(w *helpWriter, header string, lines [][]string) {
+	w.PrintBlankLine()
 	printCardHeader(w, header)
 	w.CardSection().PrintColumns(lines)
 	printCardFooter(w)
 }
 
 func printCardHeader(w *helpWriter, title string) {
-	padding := strings.Repeat("─", w.width-len(title)-7)
-	w.Printf("╭─ %s ─%s─╮", ColorLow(title), padding)
+	w.Print(ColorCardHeader(title))
 }
 
-func printCardFooter(w *helpWriter) {
-	padding := strings.Repeat("─", w.width-2)
-	w.Print(fmt.Sprintf("╰%s╯", padding))
+func printCardFooter(_ *helpWriter) {
 }
 
 // Directly from kong source code:

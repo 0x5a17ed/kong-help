@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"os"
 
-	konghelp "github.com/0x5a17ed/kong-help"
 	"github.com/alecthomas/kong"
+
+	konghelp "github.com/0x5a17ed/kong-help"
 )
 
 type (
-	StatusCmd struct{}
-	InitCmd   struct {
+	InitCmd struct {
 		Quiet     bool   `short:"q" help:"Only print error and warning messages; all other output will be suppressed."`
 		Directory string `help:"If you provide a <directory>, the command is run inside it."`
+	}
+	StatusCmd struct{}
+	AddCmd    struct {
+		Paths []string `arg:"" help:"The path to the file to add."`
 	}
 	CommitCmd struct {
 		All     bool   `aliases:"branches" help:"Automatically stage files that have been moddified and deleted, but new files you have not told Git about are not affected."`
@@ -28,6 +32,7 @@ type (
 
 func (InitCmd) Run() error   { return nil }
 func (StatusCmd) Run() error { return nil }
+func (AddCmd) Run() error    { return nil }
 func (CommitCmd) Run() error { return nil }
 func (PushCmd) Run() error   { return nil }
 
@@ -37,6 +42,7 @@ type CMD struct {
 
 	Init   InitCmd   `cmd:"" help:"Create an empty Git repository or reinitialize an existing one."`
 	Status StatusCmd `cmd:"" default:"1" help:"Show the git status of the Git repository."`
+	Add    AddCmd    `cmd:"" help:"Add file contents to the index."`
 	Commit CommitCmd `cmd:"" help:"Record changes to the repository."`
 	Push   PushCmd   `cmd:"" help:"Update remote rerfs along with associated objects."`
 }

@@ -14,12 +14,12 @@ import (
 var _ io.WriterTo = &helpWriter{}
 
 const _MaxIterations = 100
+const columnSeparator = "  "
 
 type helpWriter struct {
 	Options kong.HelpOptions
 	lines   *[]string
 	prefix  string
-	suffix  string
 	width   int
 }
 
@@ -46,7 +46,7 @@ func (w *helpWriter) PrintColumns(lines [][]string) {
 	maxes := []int{-1}
 	for _, parts := range lines {
 		for i, part := range parts {
-			if i == len(parts) || i == 0 {
+			if i == len(parts)-1 || i == 0 {
 				continue
 			}
 			part = Visible(part)
@@ -81,19 +81,14 @@ func (w *helpWriter) PrintColumns(lines [][]string) {
 			panic(err)
 		}
 		for _, line := range lines {
-			var padding string
-			visible := Visible(line)
-			if len(visible) <= w.width {
-				padding = strings.Repeat(" ", w.width-len(visible))
-			}
-			w.Print(line + padding)
+			w.Print(strings.TrimRight(line, " "))
 		}
 	}
 }
 
 func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
 	// Base case: whole line < maxWidth
-	line := strings.Join(parts, " ")
+	line := strings.Join(parts, columnSeparator)
 	visible := Visible(line)
 	if len(visible) <= maxWidth {
 		return []string{line}, nil
@@ -113,7 +108,7 @@ func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
 		if tail == 0 {
 			return nil, fmt.Errorf("terminal too small: %v", parts)
 		}
-		newLine := strings.Join(parts[:tail], " ")
+		newLine := strings.Join(parts[:tail], columnSeparator)
 		if visible := Visible(newLine); len(visible) < maxWidth {
 			paddingSize = len(visible)
 			lines = []string{newLine}
@@ -149,7 +144,18 @@ func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
 }
 
 func (w *helpWriter) Print(line string) {
-	*w.lines = append(*w.lines, fmt.Sprintf("%s%s%s", w.prefix, line, w.suffix))
+	*w.lines = append(*w.lines, fmt.Sprintf("%s%s", w.prefix, line))
+}
+
+func (w *helpWriter) PrintBlankLine() {
+	lines := *w.lines
+	if len(lines) == 0 {
+		return
+	}
+	if strings.TrimSpace(Visible(lines[len(lines)-1])) == "" {
+		return
+	}
+	w.Print("")
 }
 
 func (w *helpWriter) PrintWrap(line string) {
@@ -173,22 +179,21 @@ func (w *helpWriter) WriteTo(writer io.Writer) (int64, error) {
 	return count, nil
 }
 
-func (h *helpWriter) Indent() *helpWriter {
+func (w *helpWriter) Indent() *helpWriter {
 	return &helpWriter{
-		Options: h.Options,
-		prefix:  h.prefix + "  ",
-		lines:   h.lines,
-		width:   h.width - 2,
+		Options: w.Options,
+		prefix:  w.prefix + "  ",
+		lines:   w.lines,
+		width:   w.width - 2,
 	}
 }
 
-func (h *helpWriter) CardSection() *helpWriter {
+func (w *helpWriter) CardSection() *helpWriter {
 	return &helpWriter{
-		Options: h.Options,
-		prefix:  "│ " + h.prefix,
-		suffix:  h.suffix + " │",
-		lines:   h.lines,
-		width:   h.width - 4,
+		Options: w.Options,
+		prefix:  w.prefix,
+		lines:   w.lines,
+		width:   w.width,
 	}
 }
 
