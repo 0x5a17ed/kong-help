@@ -1,4 +1,4 @@
-module github.com/ohhfishal/kong-help
+module github.com/0x5a17ed/kong-help
 
 go 1.25.2
 

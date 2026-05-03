@@ -2,6 +2,8 @@
 
 Library to generate pretty help output for Go CLI's that use [alecthomas/kong](https://github.com/alecthomas/kong). Help output based heavily on the format used by [rendercv](https://github.com/rendercv/rendercv).
 
+Forked from [ohhfishal/kong-help](https://github.com/ohhfishal/kong-help).
+
 ## Basic Example
 
 ```go
@@ -9,7 +11,7 @@ package main
 
 import (
 	"github.com/alecthomas/kong"
-	konghelp "github.com/ohhfishal/kong-help"
+	konghelp "github.com/0x5a17ed/kong-help"
 	"os"
 )
 
