@@ -95,7 +95,9 @@ func printPositionals(w *helpWriter, args []*kong.Positional) {
 func printFlags(w *helpWriter, flags [][]*kong.Flag) {
 	lines := [][]string{}
 	for _, collection := range collectFlagGroups(flags) {
-		lines = append(lines, formatGroup(collection.Metadata)...)
+		if collection.Metadata != nil {
+			lines = append(lines, formatGroup(collection.Metadata)...)
+		}
 		for _, flagset := range collection.Flags {
 			for _, flag := range flagset {
 				lines = append(lines, formatFlag(flag, w.Options.ValueFormatter))
@@ -181,8 +183,7 @@ func collectFlagGroups(flags [][]*kong.Flag) []helpFlagGroup {
 	// Ungrouped flags are always displayed first.
 	if ungroupedFlags, ok := flagsByGroup[""]; ok {
 		out = append(out, helpFlagGroup{
-			Metadata: &kong.Group{Title: "Flags:"},
-			Flags:    ungroupedFlags,
+			Flags: ungroupedFlags,
 		})
 	}
 	for _, group := range groups {

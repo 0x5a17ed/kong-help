@@ -96,6 +96,32 @@ func TestAggregateIntoLinesUsesTwoSpaceColumnSeparator(t *testing.T) {
 	}
 }
 
+func TestOptionsOmitsSyntheticFlagsGroupForUngroupedFlags(t *testing.T) {
+	var cli struct {
+		Verbose bool   `short:"v" help:"Verbose output."`
+		Path    string `type:"path" help:"Path to inspect."`
+	}
+
+	output := renderHelp(t, &cli, "--help")
+
+	assertContains(t, output, "Options\n    -h, --help")
+	assertNotContainsLine(t, output, "Flags")
+}
+
+func TestOptionsKeepsExplicitFlagGroupHeaders(t *testing.T) {
+	var cli struct {
+		Alpha bool `short:"a" help:"Flag A." group:"Group"`
+		Beta  bool `short:"b" help:"Flag B." group:"Group"`
+	}
+
+	output := renderHelp(t, &cli, "--help")
+
+	assertContains(t, output, "\n    Group\n")
+	assertContains(t, output, "    -a, --alpha  Flag A.")
+	assertContains(t, output, "    -b, --beta   Flag B.")
+	assertNotContainsLine(t, output, "Flags")
+}
+
 func assertSingleBlankLineBefore(t *testing.T, output, header string) {
 	t.Helper()
 
@@ -116,4 +142,20 @@ func assertSingleBlankLineBefore(t *testing.T, output, header string) {
 		return
 	}
 	t.Fatalf("could not find %q in output:\n%s", header, output)
+}
+
+func assertContains(t *testing.T, output, needle string) {
+	t.Helper()
+	if !strings.Contains(output, needle) {
+		t.Fatalf("expected output to contain %q:\n%s", needle, output)
+	}
+}
+
+func assertNotContainsLine(t *testing.T, output, line string) {
+	t.Helper()
+	for _, outputLine := range strings.Split(output, "\n") {
+		if strings.TrimSpace(outputLine) == line {
+			t.Fatalf("expected output not to contain line %q:\n%s", line, output)
+		}
+	}
 }

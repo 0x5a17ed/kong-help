@@ -75,6 +75,7 @@ func (w *helpWriter) PrintColumns(lines [][]string) {
 	}
 
 	for _, parts := range lines {
+		parts = compactEmptyIntermediateColumns(parts, maxes)
 		lines, err := AggregateIntoLines(parts, w.width)
 		if err != nil {
 			// TODO: Return errors
@@ -84,6 +85,17 @@ func (w *helpWriter) PrintColumns(lines [][]string) {
 			w.Print(strings.TrimRight(line, " "))
 		}
 	}
+}
+
+func compactEmptyIntermediateColumns(parts []string, maxes []int) []string {
+	out := parts[:0]
+	for i, part := range parts {
+		if i != 0 && i != len(parts)-1 && i < len(maxes) && maxes[i] == 0 {
+			continue
+		}
+		out = append(out, part)
+	}
+	return out
 }
 
 func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
